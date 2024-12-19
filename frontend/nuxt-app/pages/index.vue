@@ -61,7 +61,7 @@
             Role
           </label>
           <input
-            type="role"
+            type="text"
             id="role"
             v-model="role"
             class="mt-1 p-2 w-full border border-gray-300 rounded-md shadow-sm focus:ring-[#789DBC] focus:border-[#789DBC]"
@@ -84,7 +84,6 @@
 
 <script>
 import { ref } from "vue";
-import { useUserStore } from "../stores/store";
 
 export default {
   name: "LoginPage",
@@ -94,7 +93,6 @@ export default {
     const role = ref("");
     const errorMessage = ref(null);
     const showPassword = ref(false);
-    const userStore = useUserStore();
 
     const togglePasswordVisibility = () => {
       showPassword.value = !showPassword.value;
@@ -121,9 +119,21 @@ export default {
         }
 
         const data = await response.json();
-        userStore.setUser(username.value, role.value);
+
+        // Simpan token dan role ke localStorage
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.role);
+
         alert("Login successful!");
-        window.location.href = "/facility";
+
+        // Redirect berdasarkan role
+        if (role.value.toUpperCase() === "USER") {
+          window.location.href = "/user";
+        } else if (role.value.toUpperCase() === "ADMIN") {
+          window.location.href = "/admin/dashboard";
+        } else {
+          errorMessage.value = "Invalid role provided.";
+        }
       } catch (error) {
         errorMessage.value = "An error occurred. Please try again.";
       }
