@@ -5,10 +5,12 @@ import { authRouter } from "./routes/home-route";
 import { Verification } from "./middleware/auth";
 import { penghuniRouter } from "./routes/penghuni-route";
 import adminRouter from "./routes/admin-route";
+import cors from "cors";
 
 const app = express();
 
 app.use(express.json());
+app.use(cors({ origin: "http://localhost:3000" }));
 
 // Check endpoint
 app.get("/", (_, response) => {
