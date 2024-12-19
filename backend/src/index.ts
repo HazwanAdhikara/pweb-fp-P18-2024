@@ -4,6 +4,8 @@ import { connectToDatabase } from "./db-connection";
 import { authRouter } from "./routes/home-route";
 import { Verification } from "./middleware/auth";
 import { penghuniRouter } from "./routes/penghuni-route";
+import adminRouter from "./routes/admin-route";
+
 
 const app = express();
 
@@ -20,6 +22,7 @@ app.use("/user/sewa", Verification, penghuniRouter);
 app.use("/user/sewa/bayar", Verification, penghuniRouter);
 app.use("/user/laporan/fasilitas", Verification, penghuniRouter);
 app.use("/user/laporan/penghuni", Verification, penghuniRouter);
+app.use("/admin", adminRouter);
 
 // Port yang digunakan untuk menjalankan server
 const PORT = 4000;

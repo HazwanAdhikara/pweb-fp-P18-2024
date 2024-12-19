@@ -79,6 +79,23 @@ const RoomOccupancySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Schema untuk UserDetail
+const UserDetailSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Users", // Referensi ke model User
+      required: true,
+    },
+    invoice_history: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "InvoiceHistory", // Referensi ke model InvoiceHistory
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
+
 // Model untuk InvoiceHistory, Payment, DamageReporting, UserReport, RoomOccupancy
 const InvoiceHistory = mongoose.model("InvoiceHistory", InvoiceHistorySchema);
 const Payment = mongoose.model("Payment", PaymentSchema);
@@ -88,6 +105,7 @@ const DamageReporting = mongoose.model(
 );
 const UserReport = mongoose.model("UserReport", UserReportSchema);
 const RoomOccupancy = mongoose.model("RoomOccupancy", RoomOccupancySchema);
+const UserDetail = mongoose.model("UserDetail", UserDetailSchema);
 
 // Ekspor model agar bisa digunakan di controller atau file lain
-export { InvoiceHistory, Payment, DamageReporting, UserReport, RoomOccupancy };
+export { InvoiceHistory, Payment, DamageReporting, UserReport, RoomOccupancy, UserDetail };
