@@ -5,7 +5,7 @@ import {
   DamageReporting,
   UserReport,
   RoomOccupancy,
-} from "../models/penghuni-model"; // Sesuaikan dengan path model Anda
+} from "../models/penghuni-model";
 
 // Controller untuk menampilkan history tagihan
 export const getInvoiceHistory = async (req: Request, res: Response) => {

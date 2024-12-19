@@ -6,7 +6,6 @@ import { Verification } from "./middleware/auth";
 import { penghuniRouter } from "./routes/penghuni-route";
 import adminRouter from "./routes/admin-route";
 
-
 const app = express();
 
 app.use(express.json());
@@ -17,11 +16,7 @@ app.get("/", (_, response) => {
 });
 
 app.use("/", authRouter);
-app.use("/user", Verification, penghuniRouter);
-app.use("/user/sewa", Verification, penghuniRouter);
-app.use("/user/sewa/bayar", Verification, penghuniRouter);
-app.use("/user/laporan/fasilitas", Verification, penghuniRouter);
-app.use("/user/laporan/penghuni", Verification, penghuniRouter);
+app.use("/", Verification, penghuniRouter);
 app.use("/admin", adminRouter);
 
 // Port yang digunakan untuk menjalankan server
