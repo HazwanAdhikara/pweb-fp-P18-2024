@@ -2,4 +2,6 @@
   <Navbar />
 
   <slot />
+
+  <Footer />
 </template>
