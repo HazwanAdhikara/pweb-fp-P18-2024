@@ -52,6 +52,11 @@ const seedDatabase = async () => {
         password: await bcrypt.hash("karen123", 10),
         role: "USER",
       },
+      {
+        username: "nayla",
+        password: await bcrypt.hash("nayla123", 10),
+        role: "USER",
+      },
     ];
 
     const savedUsers = [];
@@ -106,11 +111,11 @@ const seedDatabase = async () => {
     // Seed Damage Reports
     const damageReports = [
       {
-        user: savedUsers[0], // User Lana
+        user: savedUsers[0]._id, // User Lana
         message: "AC tidak berfungsi",
       },
       {
-        user: savedUsers[1], // User Karen
+        user: savedUsers[1]._id, // User Karen
         message: "Lampu kamar mati",
       },
     ];

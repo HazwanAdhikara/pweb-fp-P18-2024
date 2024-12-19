@@ -45,6 +45,11 @@ const PaymentSchema = new mongoose.Schema(
 // Schema untuk DamageReporting
 const DamageReportingSchema = new mongoose.Schema(
   {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Users", // Referensi ke model Users
+      required: true,
+    },
     message: {
       type: String,
       required: true,
