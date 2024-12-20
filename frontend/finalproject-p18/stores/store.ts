@@ -10,5 +10,12 @@ export const useUserStore = defineStore("user", {
       this.username = username;
       this.role = role;
     },
+    clearUser() {
+      this.username = "Guest";
+      this.role = "guest";
+      localStorage.removeItem("username");
+      localStorage.removeItem("role");
+      localStorage.removeItem("token");
+    },
   },
 });

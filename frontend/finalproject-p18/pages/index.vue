@@ -124,8 +124,9 @@ export default {
         userStore.setUser(username.value, role.value);
 
         // Simpan token dan role ke localStorage
-        localStorage.setItem("token", data.token);
+        localStorage.setItem("username", username.value);
         localStorage.setItem("role", role.value);
+        localStorage.setItem("token", data.token);
 
         alert("Login successful!");
 
