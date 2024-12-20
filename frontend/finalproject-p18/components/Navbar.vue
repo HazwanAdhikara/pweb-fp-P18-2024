@@ -1,13 +1,11 @@
 <script>
-import { ref } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useUserStore } from "../stores/store";
-import { computed } from "vue";
 
 export default {
   setup() {
     const isDropdownOpen = ref(false);
     const isMobileMenuOpen = ref(false);
-    const userStore = useUserStore();
 
     const toggleDropdown = () => {
       isDropdownOpen.value = !isDropdownOpen.value;
@@ -17,13 +15,26 @@ export default {
       isMobileMenuOpen.value = !isMobileMenuOpen.value;
     };
 
+    const userStore = useUserStore();
+
+    // Menggunakan computed untuk mengambil data dari localStorage
+    const userName = computed(
+      () => localStorage.getItem("username") || "Guest"
+    );
+    const userRole = computed(() => localStorage.getItem("role") || "GUEST");
+
+    const handleSignOut = () => {
+      userStore.clearUser(); // Reset user data
+    };
+
     return {
-      userName: computed(() => userStore.username || "Guest"),
-      userRole: computed(() => userStore.role || "guest"),
+      userName,
+      userRole,
       isDropdownOpen,
       isMobileMenuOpen,
       toggleDropdown,
       toggleMobileMenu,
+      handleSignOut,
     };
   },
 };
@@ -125,8 +136,7 @@ export default {
         <div class="relative ml-3">
           <div class="flex items-center">
             <p class="text-white mx-5">
-              {{ userName || "Guest" }} as
-              {{ (userRole || "guest").toUpperCase() }}
+              {{ userName }} as {{ userRole.toUpperCase() }}
             </p>
             <button
               type="button"
@@ -153,9 +163,14 @@ export default {
             <a href="#" class="block px-4 py-2 text-sm text-gray-700"
               >Settings</a
             >
-            <a href="#" class="block px-4 py-2 text-sm text-gray-700"
-              >Sign out</a
+            <a
+              href="/"
+              class="block px-4 py-2 text-sm text-gray-700"
+              @click="handleSignOut"
+              aria-current="$route.path === '/' ? 'page' : null"
             >
+              Sign out
+            </a>
           </div>
         </div>
       </div>

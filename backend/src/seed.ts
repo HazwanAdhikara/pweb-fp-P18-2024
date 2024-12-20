@@ -26,18 +26,29 @@ const seedDatabase = async () => {
     console.log("Connected to MongoDB");
 
     // Seed Admin User
-    const admin = {
-      username: "admin",
-      password: await bcrypt.hash("admin123", 10),
-      role: "ADMIN",
-    };
+    const admin = [
+      {
+        username: "admin",
+        password: await bcrypt.hash("admin123", 10),
+        role: "ADMIN",
+      },
+      {
+        username: "hazwan",
+        password: await bcrypt.hash("hazwan123", 10),
+        role: "ADMIN",
+      },
+    ];
 
-    const existingAdmin = await User.findOne({ username: admin.username });
-    if (!existingAdmin) {
-      await User.create(admin);
-      console.log("Admin user created");
-    } else {
-      console.log("Admin user already exists");
+    for (const adminUser of admin) {
+      const existingAdmin = await User.findOne({
+        username: adminUser.username,
+      });
+      if (!existingAdmin) {
+        await User.create(adminUser);
+        console.log(`Admin user ${adminUser.username} created`);
+      } else {
+        console.log(`Admin user ${adminUser.username} already exists`);
+      }
     }
 
     // Seed Regular Users
@@ -147,7 +158,6 @@ const seedDatabase = async () => {
     await UserDetail.deleteMany({});
     await UserDetail.insertMany(userDetails);
     console.log("User details seeded");
-
   } catch (error) {
     console.error("Error seeding database:", error);
   } finally {

@@ -93,6 +93,7 @@ export default {
     const role = ref("");
     const errorMessage = ref(null);
     const showPassword = ref(false);
+    const userStore = useUserStore();
 
     const togglePasswordVisibility = () => {
       showPassword.value = !showPassword.value;
@@ -119,10 +120,12 @@ export default {
         }
 
         const data = await response.json();
+        console.log(data);
+        userStore.setUser(username.value, role.value);
 
         // Simpan token dan role ke localStorage
         localStorage.setItem("token", data.token);
-        localStorage.setItem("role", data.role);
+        localStorage.setItem("role", role.value);
 
         alert("Login successful!");
 
