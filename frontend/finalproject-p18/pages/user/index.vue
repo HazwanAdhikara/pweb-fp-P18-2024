@@ -12,7 +12,6 @@
           class="mb-4 border-b pb-4"
         >
           <p><strong>Tanggal Pembayaran:</strong> {{ bill.date }}</p>
-          <p><strong>Status:</strong> {{ bill.status }}</p>
           <p><strong>Total:</strong> Rp {{ bill.total }}</p>
         </li>
       </ul>
@@ -23,7 +22,7 @@
 
     <!-- Navigasi ke Halaman Lain -->
     <div class="bg-white rounded-lg shadow p-4">
-      <h2 class="text-xl font-semibold mb-4 text-blue-600">Menu</h2>
+      <h2 class="text-xl font-semibold mb-4 text-blue-600">Navigasi</h2>
       <ul class="flex flex-wrap gap-4">
         <li>
           <router-link to="/user/sewa" class="bubble-link">
@@ -57,22 +56,35 @@ export default {
   name: "UserDashboard",
   setup() {
     const billingHistory = ref([]);
+    const errorMessage = ref("");
 
     const fetchBillingHistory = async () => {
       const token = localStorage.getItem("token");
       try {
-        const response = await fetch("http://localhost:4000/user/billing", {
+        const response = await fetch("http://localhost:4000/user", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        billingHistory.value = await response.json();
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Transformasi data agar sesuai dengan template
+        billingHistory.value = data.map((item) => ({
+          total: item.bill,
+          date: new Date(item.created_at).toLocaleDateString("id-ID"),
+        }));
       } catch (error) {
-        console.error("Gagal mengambil data tagihan", error);
+        errorMessage.value = "Gagal mengambil data tagihan. Silakan coba lagi.";
+        console.error("Error fetching billing history:", error);
       }
     };
 
     onMounted(fetchBillingHistory);
 
-    return { billingHistory };
+    return { billingHistory, errorMessage };
   },
 };
 </script>
