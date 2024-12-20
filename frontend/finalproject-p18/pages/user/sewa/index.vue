@@ -1,5 +1,26 @@
 <template>
   <div class="p-6 bg-gray-100 min-h-screen">
+    <RouterLink
+      to="/user"
+      class="inline-flex items-center mb-6 text-blue-600 hover:text-blue-800 transition-colors"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-5 w-5 mr-2"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M10 19l-7-7m0 0l7-7m-7 7h18"
+        />
+      </svg>
+      Back to Dashboard
+    </RouterLink>
+
     <h1 class="text-3xl font-bold mb-6 text-blue-600">Sewa Kamar</h1>
 
     <!-- Spesifikasi Kamar -->
