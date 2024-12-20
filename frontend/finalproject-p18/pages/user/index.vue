@@ -23,7 +23,7 @@
 
     <!-- Navigasi ke Halaman Lain -->
     <div class="bg-white rounded-lg shadow p-4">
-      <h2 class="text-xl font-semibold mb-4 text-blue-600">Navigasi</h2>
+      <h2 class="text-xl font-semibold mb-4 text-blue-600">Layanan</h2>
       <ul class="flex flex-wrap gap-4">
         <li>
           <router-link to="/user/sewa" class="bubble-link">
