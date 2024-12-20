@@ -59,7 +59,7 @@
 
         <button
           type="submit"
-          class="w-full py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700"
+          class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700"
         >
           Kirim Laporan
         </button>

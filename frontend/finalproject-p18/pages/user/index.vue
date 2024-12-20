@@ -12,6 +12,7 @@
           class="mb-4 border-b pb-4"
         >
           <p><strong>Tanggal Pembayaran:</strong> {{ bill.date }}</p>
+          <p><strong>Status:</strong> {{ bill.status }}</p>
           <p><strong>Total:</strong> Rp {{ bill.total }}</p>
         </li>
       </ul>
@@ -75,6 +76,7 @@ export default {
         billingHistory.value = data.map((item) => ({
           total: item.bill,
           date: new Date(item.created_at).toLocaleDateString("id-ID"),
+          status: item.bill > 10000000 ? "Lunas" : "Belum Lunas", // Sesuaikan logika status
         }));
       } catch (error) {
         errorMessage.value = "Gagal mengambil data tagihan. Silakan coba lagi.";
