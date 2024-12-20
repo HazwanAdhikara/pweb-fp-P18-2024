@@ -1,3 +1,103 @@
 <template>
-  <h1>halo ini user</h1>
+  <div class="p-6 bg-gray-100 min-h-screen">
+    <h1 class="text-3xl font-bold mb-6 text-blue-600">Dashboard Penghuni</h1>
+
+    <!-- History Tagihan -->
+    <div class="bg-white rounded-lg shadow p-4 mb-6">
+      <h2 class="text-xl font-semibold mb-4 text-blue-600">History Tagihan</h2>
+      <ul>
+        <li
+          v-for="(bill, index) in billingHistory"
+          :key="index"
+          class="mb-4 border-b pb-4"
+        >
+          <p><strong>Tanggal Pembayaran:</strong> {{ bill.date }}</p>
+          <p><strong>Status:</strong> {{ bill.status }}</p>
+          <p><strong>Total:</strong> Rp {{ bill.total }}</p>
+        </li>
+      </ul>
+      <p v-if="billingHistory.length === 0" class="text-gray-500">
+        Belum ada history tagihan.
+      </p>
+    </div>
+
+    <!-- Navigasi ke Halaman Lain -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <h2 class="text-xl font-semibold mb-4 text-blue-600">Menu</h2>
+      <ul class="flex flex-wrap gap-4">
+        <li>
+          <router-link to="/user/sewa" class="bubble-link">
+            Sewa Kamar
+          </router-link>
+        </li>
+        <li>
+          <router-link to="/user/sewa/bayar" class="bubble-link">
+            Pembayaran
+          </router-link>
+        </li>
+        <li>
+          <router-link to="/user/laporan/fasilitas" class="bubble-link">
+            Laporan Fasilitas
+          </router-link>
+        </li>
+        <li>
+          <router-link to="/user/laporan/penghuni" class="bubble-link">
+            Laporan Penghuni
+          </router-link>
+        </li>
+      </ul>
+    </div>
+  </div>
 </template>
+
+<script>
+import { ref, onMounted } from "vue";
+
+export default {
+  name: "UserDashboard",
+  setup() {
+    const billingHistory = ref([]);
+
+    const fetchBillingHistory = async () => {
+      const token = localStorage.getItem("token");
+      try {
+        const response = await fetch("http://localhost:4000/user/billing", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        billingHistory.value = await response.json();
+      } catch (error) {
+        console.error("Gagal mengambil data tagihan", error);
+      }
+    };
+
+    onMounted(fetchBillingHistory);
+
+    return { billingHistory };
+  },
+};
+</script>
+
+<style scoped>
+body {
+  font-family: Arial, sans-serif;
+}
+
+.bubble-link {
+  display: inline-block;
+  padding: 12px 20px;
+  background-color: #e0f7fa;
+  color: #00796b;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: bold;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.bubble-link:hover {
+  background-color: #00796b;
+  color: #ffffff;
+  transform: scale(1.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+</style>
