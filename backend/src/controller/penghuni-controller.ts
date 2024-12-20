@@ -6,6 +6,8 @@ import {
   UserReport,
   RoomOccupancy,
 } from "../models/penghuni-model";
+import { generateInvoicePDF } from "../utils/pdfUtils";
+import path from "path";
 
 // Controller untuk menampilkan history tagihan
 export const getInvoiceHistory = async (req: Request, res: Response) => {
@@ -28,7 +30,14 @@ export const createPayment = async (req: Request, res: Response) => {
       rent_periods,
     });
     await newPayment.save();
-    res.status(201).json(newPayment);
+
+    const pdfPath = await generateInvoicePDF(newPayment);
+
+    res.status(201).json({
+      message: "Payment created successfully",
+      payment: newPayment,
+      invoice: path.basename(pdfPath),
+    });
   } catch (error) {
     res.status(500).json({ message: "Error creating payment", error });
   }
