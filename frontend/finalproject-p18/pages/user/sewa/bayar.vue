@@ -27,23 +27,39 @@
       <h2 class="text-xl font-semibold mb-4 text-blue-600">
         Detail Perhitungan
       </h2>
-      <p><strong>Periode Sewa:</strong> {{ period }} bulan</p>
-      <p><strong>Harga Sewa:</strong> Rp {{ rentalCost.toLocaleString() }}</p>
+      <p><strong>Periode Sewa:</strong> {{ rentalDetails.period }} bulan</p>
       <p>
-        <strong>Fitur Tambahan:</strong>
-        {{ selectedFeatures.join(", ") || "Tidak ada" }}
-      </p>
-      <p>
-        <strong>Biaya Fitur Tambahan:</strong> Rp
-        {{ additionalCost.toLocaleString() }}
-      </p>
-      <p class="text-lg font-bold mt-4">
-        Total: Rp {{ totalCost.toLocaleString() }}
+        <strong>Total Biaya:</strong> Rp
+        {{ formatCurrency(rentalDetails.total) }}
       </p>
     </div>
 
+    <!-- Status Pembayaran -->
+    <div v-if="showPaymentStatus" class="bg-white rounded-lg shadow p-4 mb-6">
+      <h2 class="text-xl font-semibold mb-4 text-blue-600">
+        Status Pembayaran
+      </h2>
+      <p><strong>Tanggal Pembayaran:</strong> {{ formattedPaymentDate }}</p>
+      <p>
+        <strong>Status:</strong> {{ paymentStatus?.status || "Belum Lunas" }}
+      </p>
+      <p><strong>Total:</strong> {{ formattedBill }}</p>
+
+      <!-- Tombol Download Invoice -->
+      <button
+        v-if="paymentStatus?.status === 'Lunas' && invoiceUrl"
+        @click="downloadInvoice"
+        class="mt-4 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition"
+      >
+        Download Invoice PDF
+      </button>
+    </div>
+
     <!-- Form Pembayaran -->
-    <div class="bg-white rounded-lg shadow p-4">
+    <div
+      v-if="!paymentStatus || paymentStatus.status === 'Belum Lunas'"
+      class="bg-white rounded-lg shadow p-4"
+    >
       <h2 class="text-xl font-semibold mb-4 text-blue-600">Form Pembayaran</h2>
       <form @submit.prevent="submitPayment">
         <!-- Pilihan Metode Pembayaran -->
@@ -62,25 +78,11 @@
           </select>
         </div>
 
-        <!-- Nama Bank (jika Transfer) -->
-        <div v-if="paymentMethod === 'Transfer'" class="mb-4">
-          <label class="block text-gray-700 font-medium mb-2">Nama Bank</label>
-          <input
-            type="text"
-            v-model="bankName"
-            class="w-full border rounded-lg p-2"
-            placeholder="Masukkan Nama Bank"
-            required
-          />
-        </div>
-
         <!-- Tombol Submit -->
         <button
           type="submit"
           class="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition w-full"
-          :disabled="
-            !paymentMethod || (paymentMethod === 'Transfer' && !bankName)
-          "
+          :disabled="!paymentMethod"
         >
           Bayar
         </button>
@@ -90,34 +92,127 @@
 </template>
 
 <script>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
 export default {
   name: "UserPayment",
   setup() {
+    const route = useRoute();
+    const router = useRouter();
     const paymentMethod = ref("");
-    const bankName = ref("");
-    const period = ref(6); // Contoh periode sewa
-    const rentalCost = ref(10000000); // Contoh biaya sewa
-    const additionalCost = ref(300000); // Contoh biaya tambahan
-    const selectedFeatures = ref([]); // Fitur tambahan yang dipilih oleh pengguna
+    const paymentStatus = ref(null);
+    const invoiceUrl = ref(null);
+    const isLoading = ref(true);
 
-    // Menghitung total biaya sewa
-    const totalCost = computed(() => rentalCost.value + additionalCost.value);
+    // State untuk menyimpan detail sewa
+    const rentalDetails = ref({
+      period: 0,
+      total: 0,
+    });
 
-    // Menangani pengiriman data pembayaran
-    const submitPayment = async () => {
-      const token = localStorage.getItem("token");
+    // Computed properties untuk formatting
+    const showPaymentStatus = computed(() => !isLoading.value);
 
-      // Data yang akan dikirimkan ke server
-      const paymentData = {
-        method: paymentMethod.value,
-        bank: bankName.value,
-        total: totalCost.value,
-        status: "Lunas", // Status Lunas setelah pembayaran berhasil
-      };
-
+    const formattedPaymentDate = computed(() => {
+      if (!paymentStatus.value?.created_at) return "-";
       try {
+        return new Date(paymentStatus.value.created_at).toLocaleDateString(
+          "id-ID",
+          {
+            day: "numeric",
+            month: "numeric",
+            year: "numeric",
+          }
+        );
+      } catch {
+        return "-";
+      }
+    });
+
+    const formattedBill = computed(() => {
+      if (!paymentStatus.value?.bill) return "Rp -";
+      return `Rp ${formatCurrency(paymentStatus.value.bill)}`;
+    });
+
+    // Format currency
+    const formatCurrency = (value) => {
+      if (!value) return "0";
+      return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    };
+
+    // Mengambil data pembayaran saat komponen dimount
+    onMounted(async () => {
+      try {
+        const queryParams = route.query;
+
+        // Validasi query params
+        if (!queryParams.period || !queryParams.total) {
+          throw new Error("Data sewa tidak lengkap");
+        }
+
+        // Set rental details dari query params
+        rentalDetails.value = {
+          period: parseInt(queryParams.period) || 0,
+          total: parseInt(queryParams.total) || 0,
+        };
+
+        // Ambil status pembayaran terkini
+        await fetchPaymentStatus();
+      } catch (error) {
+        console.error("Error initializing payment page:", error);
+        alert("Terjadi kesalahan saat memuat data. Silakan coba lagi.");
+        router.push("/user/sewa");
+      } finally {
+        isLoading.value = false;
+      }
+    });
+
+    // Mengambil status pembayaran
+    const fetchPaymentStatus = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) throw new Error("Token tidak ditemukan");
+
+        const response = await fetch("http://localhost:4000/user", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) throw new Error("Gagal mengambil status pembayaran");
+
+        const data = await response.json();
+        if (data && Object.keys(data).length > 0) {
+          paymentStatus.value = {
+            ...data,
+            status: data.bill ? "Lunas" : "Belum Lunas",
+          };
+        }
+      } catch (error) {
+        console.error("Error fetching payment status:", error);
+        paymentStatus.value = {
+          status: "Belum Lunas",
+          bill: null,
+          created_at: null,
+        };
+      }
+    };
+
+    // Handle submit pembayaran
+    const submitPayment = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("Token tidak ditemukan. Silakan login kembali.");
+        }
+
+        const paymentData = {
+          total_bill: rentalDetails.value.total,
+          payment_method: paymentMethod.value,
+          rent_periods: rentalDetails.value.period,
+        };
+
         const response = await fetch("http://localhost:4000/user/sewa/bayar", {
           method: "POST",
           headers: {
@@ -128,42 +223,65 @@ export default {
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorData = await response.json().catch(() => null);
+          throw new Error(errorData?.message || "Pembayaran gagal");
         }
 
-        // Pembayaran berhasil, bisa update riwayat tagihan
+        const result = await response.json();
+
+        if (result.invoice) {
+          invoiceUrl.value = `http://localhost:4000/downloads/${result.invoice}`;
+        }
+
+        await fetchPaymentStatus();
         alert("Pembayaran berhasil!");
       } catch (error) {
         console.error("Error submitting payment:", error);
-        alert("Pembayaran gagal. Silakan coba lagi.");
+        alert(`Pembayaran gagal: ${error.message}`);
+      }
+    };
+
+    // Handle download invoice
+    const downloadInvoice = async () => {
+      if (!invoiceUrl.value) return;
+
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(invoiceUrl.value, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) throw new Error("Gagal mengunduh invoice");
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `invoice-${new Date().getTime()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } catch (error) {
+        console.error("Error downloading invoice:", error);
+        alert("Gagal mengunduh invoice. Silakan coba lagi.");
       }
     };
 
     return {
       paymentMethod,
-      bankName,
-      period,
-      rentalCost,
-      additionalCost,
-      selectedFeatures,
-      totalCost,
+      rentalDetails,
+      paymentStatus,
+      invoiceUrl,
+      showPaymentStatus,
+      formattedPaymentDate,
+      formattedBill,
       submitPayment,
+      downloadInvoice,
+      formatCurrency,
     };
   },
 };
 </script>
-
-<style scoped>
-body {
-  font-family: Arial, sans-serif;
-}
-
-button:disabled {
-  background-color: #d1d5db;
-  cursor: not-allowed;
-}
-
-button:hover:enabled {
-  transform: scale(1.05);
-}
-</style>
