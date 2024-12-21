@@ -43,8 +43,6 @@
       <p>
         <strong>Status:</strong> {{ paymentStatus?.status || "Belum Lunas" }}
       </p>
-      <p><strong>Total:</strong> {{ formattedBill }}</p>
-
       <!-- Tombol Download Invoice -->
       <button
         v-if="paymentStatus?.status === 'Lunas' && invoiceUrl"
