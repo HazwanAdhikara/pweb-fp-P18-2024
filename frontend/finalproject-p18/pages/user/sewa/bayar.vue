@@ -29,7 +29,7 @@
       </h2>
       <p><strong>Periode Sewa:</strong> {{ rentalDetails.period }} bulan</p>
       <p>
-        <strong>Total Biaya:</strong> Rp
+        <strong>Total Biaya Seluruhnya:</strong> Rp
         {{ formatCurrency(rentalDetails.total) }}
       </p>
     </div>
@@ -74,17 +74,29 @@
           >
             <option value="" disabled>Pilih Metode Pembayaran</option>
             <option value="QRIS">QRIS</option>
-            <option value="Transfer">Transfer</option>
+            <option value="BANK_TRANSFER">Transfer Bank</option>
           </select>
+        </div>
+
+        <!-- Input Nama Bank -->
+        <div v-if="paymentMethod === 'BANK_TRANSFER'" class="mb-4">
+          <label class="block text-gray-700 font-medium mb-2">Nama Bank</label>
+          <input
+            type="text"
+            v-model="bankName"
+            class="w-full border rounded-lg p-2"
+            placeholder="Masukkan nama bank"
+            required
+          />
         </div>
 
         <!-- Tombol Submit -->
         <button
           type="submit"
-          class="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition w-full"
+          class="bg-blue-600 text-white p-2 rounded"
           :disabled="!paymentMethod"
         >
-          Bayar
+          Submit Pembayaran
         </button>
       </form>
     </div>
@@ -101,6 +113,7 @@ export default {
     const route = useRoute();
     const router = useRouter();
     const paymentMethod = ref("");
+    const bankName = ref("");
     const paymentStatus = ref(null);
     const invoiceUrl = ref(null);
     const isLoading = ref(true);
@@ -199,20 +212,26 @@ export default {
       }
     };
 
-    // Handle submit pembayaran
     const submitPayment = async () => {
+      console.log("Bank Name:", bankName.value);
+      console.log("Payment Method:", paymentMethod.value); // Debugging untuk memastikan kondisi
+
       try {
         const token = localStorage.getItem("token");
         if (!token) {
           throw new Error("Token tidak ditemukan. Silakan login kembali.");
         }
 
+        // Menyiapkan paymentData
         const paymentData = {
           total_bill: rentalDetails.value.total,
           payment_method: paymentMethod.value,
           rent_periods: rentalDetails.value.period,
+          bank_name:
+            paymentMethod.value === "BANK_TRANSFER" ? bankName.value : null,
         };
 
+        // Kirim data pembayaran ke server
         const response = await fetch("http://localhost:4000/user/sewa/bayar", {
           method: "POST",
           headers: {
@@ -238,6 +257,8 @@ export default {
       } catch (error) {
         console.error("Error submitting payment:", error);
         alert(`Pembayaran gagal: ${error.message}`);
+
+        console.log("Payment Data:", paymentData);
       }
     };
 
@@ -281,6 +302,7 @@ export default {
       submitPayment,
       downloadInvoice,
       formatCurrency,
+      bankName,
     };
   },
 };
