@@ -53,6 +53,17 @@
       >
         Download Invoice PDF
       </button>
+
+      <div v-if="invoiceUrl" class="mt-4">
+        <!-- Link untuk membuka invoice di tab baru dengan tampilan tombol hijau -->
+        <a
+          :href="invoiceUrl"
+          target="_blank"
+          class="text-white bg-green-500 hover:bg-green-700 py-2 px-4 rounded-md mb-4"
+        >
+          Klik di sini untuk melihat invoice
+        </a>
+      </div>
     </div>
 
     <!-- Form Pembayaran -->
@@ -93,7 +104,7 @@
         <!-- Tombol Submit -->
         <button
           type="submit"
-          class="bg-blue-600 text-white p-2 rounded"
+          class="bg-blue-600 text-white py-2 px-4 rounded"
           :disabled="!paymentMethod"
         >
           Submit Pembayaran
@@ -249,7 +260,7 @@ export default {
         const result = await response.json();
 
         if (result.invoice) {
-          invoiceUrl.value = `http://localhost:4000/downloads/${result.invoice}`;
+          invoiceUrl.value = `http://localhost:4000/api/downloads/${result.invoice}`;
         }
 
         await fetchPaymentStatus();
@@ -262,34 +273,64 @@ export default {
       }
     };
 
-    // Handle download invoice
-    const downloadInvoice = async () => {
+    async function downloadInvoice() {
       if (!invoiceUrl.value) return;
 
       try {
         const token = localStorage.getItem("token");
         const response = await fetch(invoiceUrl.value, {
+          method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
+            Accept: "application/pdf",
           },
+          credentials: "include",
         });
 
-        if (!response.ok) throw new Error("Gagal mengunduh invoice");
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Server response:", errorText);
+          throw new Error(
+            `Gagal mengunduh invoice: ${response.status} - ${errorText}`
+          );
+        }
 
         const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `invoice-${new Date().getTime()}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        if (blob.size === 0) {
+          const reader = new FileReader();
+          reader.readAsText(blob);
+          reader.onload = function (event) {
+            const text = event.target.result;
+            console.error("Empty PDF:", text);
+            throw new Error("File PDF kosong atau terdapat error pada server");
+          };
+          reader.onerror = function (error) {
+            console.error("Error reading blob:", error);
+            throw new Error("Gagal membaca file PDF");
+          };
+        } else {
+          // Create a temporary URL for the blob
+          const url = URL.createObjectURL(blob);
+
+          // Trigger the download using a hidden anchor element
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `invoice-${new Date().toISOString()}.pdf`; // Generate a unique filename
+          link.style.display = "none";
+          document.body.appendChild(link);
+          link.click();
+
+          // Cleanup the temporary URL after a short delay
+          setTimeout(() => {
+            URL.revokeObjectURL(url);
+            document.body.removeChild(link);
+          }, 1000);
+        }
       } catch (error) {
         console.error("Error downloading invoice:", error);
-        alert("Gagal mengunduh invoice. Silakan coba lagi.");
+        alert(`Gagal mengunduh invoice: ${error.message}`);
       }
-    };
+    }
 
     return {
       paymentMethod,
@@ -307,3 +348,21 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+/* Styling untuk membuat link seperti tombol */
+.btn-green {
+  background-color: #38a169; /* Hijau */
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  text-align: center;
+}
+
+.btn-green:hover {
+  background-color: #2f855a; /* Hijau lebih gelap saat hover */
+}
+</style>
