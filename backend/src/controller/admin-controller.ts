@@ -4,6 +4,7 @@ import {
   DamageReporting,
   UserReport,
   UserDetail,
+  Room,
 } from "../models/penghuni-model";
 import { User } from "../models/home-model";
 
@@ -83,5 +84,15 @@ export const getUsers = async (req: Request, res: Response) => {
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ message: "Error fetching users", error });
+  }
+};
+
+// Get All Rooms
+export const getRooms = async (req: Request, res: Response) => {
+  try {
+    const rooms = await Room.find().sort({ room_number: 1 }); // Mengurutkan berdasarkan nomor kamar
+    res.status(200).json(rooms);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching rooms", error });
   }
 };

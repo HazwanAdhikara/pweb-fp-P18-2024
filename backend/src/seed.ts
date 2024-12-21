@@ -9,6 +9,7 @@ import {
   DamageReporting,
   UserReport,
   UserDetail,
+  Room, 
 } from "./models/penghuni-model";
 
 dotenv.config();
@@ -168,6 +169,16 @@ const seedDatabase = async () => {
     await UserDetail.deleteMany({});
     await UserDetail.insertMany(userDetails);
     console.log("User details seeded");
+
+    // Seed Rooms
+    const rooms = Array.from({ length: 10 }, (_, i) => ({
+      room_number: i + 1,
+      status: i < 5 ? "FILLED" : "EMPTY", // 5 kamar terisi, 5 kamar kosong
+    }));
+
+    await Room.deleteMany({});
+    await Room.insertMany(rooms);
+    console.log("Rooms seeded successfully");
   } catch (error) {
     console.error("Error seeding database:", error);
   } finally {

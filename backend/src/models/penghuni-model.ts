@@ -101,6 +101,20 @@ const UserDetailSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+
+const RoomSchema = new mongoose.Schema({
+  room_number: {
+    type: Number,
+    required: true,
+    unique: true,
+  },
+  status: {
+    type: String,
+    enum: ["EMPTY", "FILLED"],
+    default: "EMPTY",
+  },
+});
+
 // Model untuk InvoiceHistory, Payment, DamageReporting, UserReport, RoomOccupancy
 const InvoiceHistory = mongoose.model("InvoiceHistory", InvoiceHistorySchema);
 const Payment = mongoose.model("Payment", PaymentSchema);
@@ -111,6 +125,7 @@ const DamageReporting = mongoose.model(
 const UserReport = mongoose.model("UserReport", UserReportSchema);
 const RoomOccupancy = mongoose.model("RoomOccupancy", RoomOccupancySchema);
 const UserDetail = mongoose.model("UserDetail", UserDetailSchema);
+const Room = mongoose.model("Room", RoomSchema);
 
 // Ekspor model agar bisa digunakan di controller atau file lain
-export { InvoiceHistory, Payment, DamageReporting, UserReport, RoomOccupancy, UserDetail };
+export { InvoiceHistory, Payment, DamageReporting, UserReport, RoomOccupancy, UserDetail, Room };
