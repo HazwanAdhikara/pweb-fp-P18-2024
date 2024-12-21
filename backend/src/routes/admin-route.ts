@@ -6,6 +6,7 @@ import {
     getUserReports,
     getUserDetails,
     removeUser,
+    getUsers
 } from "../controller/admin-controller";
 
 const adminRouter = Router();
@@ -19,5 +20,6 @@ adminRouter.get("/laporan/fasilitas", getFacilityReports);
 adminRouter.get("/laporan/penghuni", getUserReports);
 adminRouter.get("/penghuni/:id", getUserDetails);
 adminRouter.delete("/penghuni/:id", removeUser);
+adminRouter.get("/users", getUsers);
 
 export default adminRouter;

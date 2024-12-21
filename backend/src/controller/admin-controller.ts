@@ -75,3 +75,13 @@ export const removeUser = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error removing user", error });
   }
 };
+
+// Get All Users
+export const getUsers = async (req: Request, res: Response) => {
+  try {
+    const users = await User.find({ role: "USER" }, "username role _id"); // Filter role USER
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching users", error });
+  }
+};
