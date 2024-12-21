@@ -36,7 +36,6 @@ export async function Verification(
     if (!user) {
       throw new Error("User not found");
     }
-
     next();
   } catch (error) {
     res.status(401).send({

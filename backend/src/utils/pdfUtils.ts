@@ -14,7 +14,7 @@ export const generateInvoicePDF = (payment: any) => {
   ensureInvoicesFolderExists();
 
   const doc = new PDFDocument();
-  const filePath = `./src/invoices/invoice-${payment._id}.pdf`;
+  const filePath = `./invoices/invoice-${payment._id}.pdf`;
 
   const stream = fs.createWriteStream(filePath);
   doc.pipe(stream);
@@ -24,7 +24,14 @@ export const generateInvoicePDF = (payment: any) => {
   doc.moveDown();
   doc.fontSize(12).text(`Invoice ID: ${payment._id}`);
   doc.text(`Tanggal: ${new Date().toLocaleDateString()}`);
-  doc.text(`Metode Pembayaran: ${payment.payment_method}`);
+
+  // Informasi Metode Pembayaran
+  if (payment.payment_method === "QRIS") {
+    doc.text(`Metode Pembayaran: QRIS`);
+  } else if (payment.payment_method === "BANK_TRANSFER") {
+    doc.text(`Metode Pembayaran: ${payment.bankName}`);
+  }
+
   doc.text(`Jumlah Tagihan: Rp ${payment.total_bill}`);
   doc.text(`Periode Sewa: ${payment.rent_periods} bulan`);
   doc.moveDown();

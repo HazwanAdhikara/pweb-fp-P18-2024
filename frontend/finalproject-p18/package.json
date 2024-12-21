@@ -13,6 +13,7 @@
     "@pinia/nuxt": "^0.9.0",
     "cors": "^2.8.5",
     "nuxt": "^3.14.1592",
+    "pdfjs-dist": "^4.9.155",
     "pinia": "^2.3.0",
     "vue": "latest",
     "vue-router": "latest"
