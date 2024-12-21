@@ -27,26 +27,65 @@
         </router-link>
       </div>
     </div>
+
+    <!-- Registered Users -->
+    <div class="mt-8">
+  <h2 class="text-xl font-semibold mb-4 text-[#789DBC]">Registered Users</h2>
+  <div v-if="errorMessage" class="text-red-500 mb-4">{{ errorMessage }}</div>
+  <div v-if="users.length === 0" class="text-gray-500">No registered users</div>
+  <!-- Grid Container -->
+  <div
+    v-else
+    class="grid grid-cols-1 md:grid-cols-3 gap-4 place-items-center"
+  >
+    <!-- Individual User Box -->
+    <div
+      v-for="user in users"
+      :key="user._id"
+      class="p-4 bg-white rounded-lg shadow cursor-pointer hover:shadow-lg flex flex-col items-center"
+      @click="goToUserDetails(user._id)"
+      style="width: 200px; height: 300px;"
+    >
+      <!-- Bagian Gambar -->
+      <div class="flex-grow" style="flex: 7;">
+        <img
+          :src="`/images/${user.username}.jpg`"
+          alt="User Photo"
+          class="w-full h-full object-cover rounded-lg"
+          style="max-height: 70%;"
+        />
+      </div>
+      <!-- Bagian Teks -->
+      <div class="flex-grow text-center mt-2" style="flex: 3;">
+        <p class="font-semibold text-lg">{{ user.username }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
   </div>
 </template>
 
 <script>
 import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 
 export default {
   name: "AdminDashboard",
   setup() {
     const roomOccupancy = ref({ empty: 0, filled: 0 });
+    const users = ref([]);
     const errorMessage = ref(null);
+    const router = useRouter();
 
     const fetchRoomOccupancy = async () => {
       try {
-        const token = localStorage.getItem("token"); // Ambil token dari localStorage
+        const token = localStorage.getItem("token");
 
         const response = await fetch("http://localhost:4000/admin/dashboard", {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${token}`, // Sertakan token di header
+            Authorization: `Bearer ${token}`,
           },
         });
 
@@ -59,17 +98,47 @@ export default {
         const data = await response.json();
         roomOccupancy.value = data[0]; // Asumsi data berupa array dengan satu objek
       } catch (error) {
-        errorMessage.value = "An error occurred. Please try again.";
+        errorMessage.value = "An error occurred while fetching room occupancy.";
       }
+    };
+
+    const fetchUsers = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        const response = await fetch("http://localhost:4000/admin/users", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          errorMessage.value = errorData.message || "Failed to fetch users";
+          return;
+        }
+
+        users.value = await response.json();
+      } catch (error) {
+        errorMessage.value = "An error occurred while fetching users.";
+      }
+    };
+
+    const goToUserDetails = (id) => {
+      router.push(`/admin/penghuni/${id}`);
     };
 
     onMounted(() => {
       fetchRoomOccupancy();
+      fetchUsers();
     });
 
     return {
       roomOccupancy,
+      users,
       errorMessage,
+      goToUserDetails,
     };
   },
 };
