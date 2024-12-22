@@ -128,6 +128,19 @@ export default {
               >
                 Rules
               </a>
+              <a
+                href="/yangpunyakos"
+                class="rounded-md px-3 py-2 text-md font-medium"
+                :class="{
+                  'text-white hover:bg-[#80BCBD]':
+                    $route.path === '/yangpunyakos',
+                  'text-gray-300 hover:bg-[#80BCBD] hover:text-white':
+                    $route.path !== '/yangpunyakos',
+                }"
+                aria-current="$route.path === '/yangpunyakos' ? 'page' : null"
+              >
+                Developers
+              </a>
             </div>
           </div>
         </div>
