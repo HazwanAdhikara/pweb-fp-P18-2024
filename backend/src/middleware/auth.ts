@@ -6,7 +6,7 @@ import { User } from "../models/home-model";
 dotenv.config();
 
 export async function Verification(
-  req: Request,
+  req: Request & { user?: any },
   res: Response,
   next: NextFunction
 ) {
@@ -36,6 +36,7 @@ export async function Verification(
     if (!user) {
       throw new Error("User not found");
     }
+    req.user = user;
     next();
   } catch (error) {
     res.status(401).send({

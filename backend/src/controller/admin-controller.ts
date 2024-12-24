@@ -5,6 +5,7 @@ import {
   UserReport,
   UserDetail,
   Room,
+  InvoiceHistory,
 } from "../models/penghuni-model";
 import { User } from "../models/home-model";
 
@@ -41,20 +42,30 @@ export const getUserReports = async (req: Request, res: Response) => {
 };
 
 // Get User Details by ID (with Invoice History)
-export const getUserDetails = async (req: Request, res: Response) => {
+export const getUserDetails = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
-    const userDetail = await UserDetail.findOne({ user: id })
-      .populate("user", "username role") // Populate detail user
-      .populate("invoice_history") // Populate detail invoice history
-      .exec();
+    const { id } = req.params; // ID pengguna yang diminta
 
-    if (!userDetail) {
-      res.status(404).json({ message: "User details not found" });
+    // Cari data pengguna berdasarkan ID
+    const user = await User.findById(id).select("username role");
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
       return;
     }
 
-    res.status(200).json(userDetail);
+    // Cari riwayat tagihan (invoice history) untuk pengguna ini
+    const invoiceHistory = await InvoiceHistory.find({ user: user._id });
+
+    // Gabungkan detail pengguna dan riwayat tagihan
+    const userDetail = {
+      user: {
+        username: user.username,
+        role: user.role,
+      },
+      invoice_history: invoiceHistory,
+    };
+
+    res.status(200).json(userDetail); // Kirimkan data detail pengguna
   } catch (error) {
     res.status(500).json({ message: "Error fetching user details", error });
   }

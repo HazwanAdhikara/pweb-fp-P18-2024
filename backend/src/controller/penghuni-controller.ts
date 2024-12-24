@@ -11,9 +11,10 @@ import { generateInvoicePDF } from "../utils/pdfUtils";
 import path from "path";
 
 // Controller untuk menampilkan history tagihan
-export const getInvoiceHistory = async (req: Request, res: Response) => {
+export const getInvoiceHistory = async (req: Request & { user?: any }, res: Response) => {
   try {
-    const invoiceHistory = await InvoiceHistory.find();
+    const userId = req.user._id;
+    const invoiceHistory = await InvoiceHistory.find({ user: userId });
     res.status(200).json(invoiceHistory);
   } catch (error) {
     res.status(500).json({ message: "Error fetching invoice history", error });
@@ -21,23 +22,39 @@ export const getInvoiceHistory = async (req: Request, res: Response) => {
 };
 
 // Controller untuk membuat pembayaran
-export const createPayment = async (req: Request, res: Response) => {
+export const createPayment = async (req: Request & { user?: any }, res: Response): Promise<void> => {
   const { total_bill, payment_method, rent_periods } = req.body;
 
   try {
+    const userId = req.user._id;
+    let invoice = await InvoiceHistory.findOne({user: userId, status: "Belum Lunas"});
+    if (!invoice) {
+       invoice = new InvoiceHistory({
+        bill: total_bill,
+        rent_periods,
+        status: "Belum Lunas",
+        user: userId,
+        created_at: new Date(),
+      });
+      await invoice.save();
+    }
     const newPayment = new Payment({
       total_bill,
       payment_method,
       rent_periods,
+      user: userId,
     });
     await newPayment.save();
+
+    invoice.status = "Lunas";
+    await invoice.save();
 
     const pdfPath = await generateInvoicePDF(newPayment);
 
     res.status(201).json({
       message: "Payment created successfully",
-      payment: newPayment,
-      invoice: path.basename(pdfPath),
+      payment: newPayment, invoice,
+      invoicePDF: path.basename(pdfPath),
     });
   } catch (error) {
     res.status(500).json({ message: "Error creating payment", error });

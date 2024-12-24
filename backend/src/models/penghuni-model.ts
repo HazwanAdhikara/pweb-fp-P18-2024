@@ -17,6 +17,16 @@ const InvoiceHistorySchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    user: {
+      type: mongoose.Schema.Types.ObjectId, // Referensi ke pengguna
+      ref: "Users",
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ["Lunas", "Belum Lunas"], // Status pembayaran
+      default: "Belum Lunas",
+    },
   },
   { timestamps: true }
 );
@@ -36,6 +46,11 @@ const PaymentSchema = new mongoose.Schema(
     rent_periods: {
       type: Number,
       enum: [3, 6],
+      required: true,
+    },
+    user: {
+      type: mongoose.Schema.Types.ObjectId, // Referensi ke pengguna
+      ref: "Users",
       required: true,
     },
   },
