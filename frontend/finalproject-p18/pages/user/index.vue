@@ -12,7 +12,6 @@
           class="mb-4 border-b pb-4"
         >
           <p><strong>Tanggal Pembayaran:</strong> {{ bill.date }}</p>
-          <p><strong>Status:</strong> {{ bill.status }}</p>
           <p><strong>Total:</strong> Rp {{ bill.total }}</p>
         </li>
       </ul>
@@ -109,7 +108,7 @@ body {
 }
 
 .bubble-link:hover {
-  background-color: #00796b;
+  background-color: blueviolet;
   color: #ffffff;
   transform: scale(1.1);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);

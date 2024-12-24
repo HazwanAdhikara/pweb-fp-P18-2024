@@ -4,11 +4,10 @@ import path from "path";
 
 export const downloadInvoice = (req: Request, res: Response) => {
   const { paymentId } = req.params; // Ambil paymentId dari URL parameter
-
-  // Tentukan path file PDF yang ingin diunduh
   const filePath = path.resolve(
     __dirname,
-    `./invoices/invoice-${paymentId}.pdf`
+    "../../invoices",
+    `invoice-${paymentId}.pdf`
   );
 
   res.setHeader("Content-Type", "application/pdf");
@@ -21,4 +20,6 @@ export const downloadInvoice = (req: Request, res: Response) => {
       return res.status(500).send("Gagal mengunduh file");
     }
   });
+
+  res.download(filePath);
 };

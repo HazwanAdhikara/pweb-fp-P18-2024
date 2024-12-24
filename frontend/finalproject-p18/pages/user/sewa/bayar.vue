@@ -43,6 +43,8 @@
       <p>
         <strong>Status:</strong> {{ paymentStatus?.status || "Belum Lunas" }}
       </p>
+      <p v-if="error" class="text-red-500">{{ error }}</p>
+
       <!-- Tombol Download Invoice -->
       <button
         v-if="paymentStatus?.status === 'Lunas' && invoiceUrl"
@@ -104,6 +106,7 @@
           type="submit"
           class="bg-blue-600 text-white py-2 px-4 rounded"
           :disabled="!paymentMethod"
+          @click="submitPayment"
         >
           Submit Pembayaran
         </button>
@@ -123,9 +126,12 @@ export default {
     const router = useRouter();
     const paymentMethod = ref("");
     const bankName = ref("");
-    const paymentStatus = ref(null);
+    const paymentStatus = ref({
+      created_at: null,
+      status: "Belum Lunas",
+    });
     const invoiceUrl = ref(null);
-    const isLoading = ref(true);
+    const isLoading = ref(false);
 
     // State untuk menyimpan detail sewa
     const rentalDetails = ref({
@@ -183,14 +189,13 @@ export default {
         await fetchPaymentStatus();
       } catch (error) {
         console.error("Error initializing payment page:", error);
-        alert("Terjadi kesalahan saat memuat data. Silakan coba lagi.");
+        alert("Anda Belum Melakukan Sewa. Silakan Sewa Kamar Terlebih Dahulu.");
         router.push("/user/sewa");
       } finally {
         isLoading.value = false;
       }
     });
 
-    // Mengambil status pembayaran
     const fetchPaymentStatus = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -202,36 +207,21 @@ export default {
           },
         });
 
-        if (!response.ok) throw new Error("Gagal mengambil status pembayaran");
-
-        const data = await response.json();
-        if (data && Object.keys(data).length > 0) {
-          paymentStatus.value = {
-            ...data,
-            status: data.bill ? "Lunas" : "Belum Lunas",
-          };
-        }
+        if (!response.ok) throw new Error("Gagal mengambil status");
       } catch (error) {
-        console.error("Error fetching payment status:", error);
-        paymentStatus.value = {
-          status: "Belum Lunas",
-          bill: null,
-          created_at: null,
-        };
+        console.error("Error:", error);
+        // Don't reset status on fetch error
       }
     };
 
     const submitPayment = async () => {
-      console.log("Bank Name:", bankName.value);
-      console.log("Payment Method:", paymentMethod.value); // Debugging untuk memastikan kondisi
+      if (isLoading.value) return; // Mencegah pengiriman ganda
+      isLoading.value = true;
 
       try {
         const token = localStorage.getItem("token");
-        if (!token) {
-          throw new Error("Token tidak ditemukan. Silakan login kembali.");
-        }
+        if (!token) throw new Error("Token tidak ditemukan");
 
-        // Menyiapkan paymentData
         const paymentData = {
           total_bill: rentalDetails.value.total,
           payment_method: paymentMethod.value,
@@ -240,7 +230,6 @@ export default {
             paymentMethod.value === "BANK_TRANSFER" ? bankName.value : null,
         };
 
-        // Kirim data pembayaran ke server
         const response = await fetch("http://localhost:4000/user/sewa/bayar", {
           method: "POST",
           headers: {
@@ -250,24 +239,34 @@ export default {
           body: JSON.stringify(paymentData),
         });
 
+        const result = await response.json();
+
         if (!response.ok) {
-          const errorData = await response.json().catch(() => null);
-          throw new Error(errorData?.message || "Pembayaran gagal");
+          throw new Error(result.message || "Pembayaran gagal");
         }
 
-        const result = await response.json();
+        // Update status immediately after successful payment
+        paymentStatus.value = {
+          ...paymentStatus.value,
+          status: "Lunas",
+          created_at: new Date().toISOString(),
+          bill: rentalDetails.value.total,
+        };
 
         if (result.invoice) {
           invoiceUrl.value = `http://localhost:4000/api/downloads/${result.invoice}`;
         }
 
+        // Refresh status from server
         await fetchPaymentStatus();
+
+        // Alert message
         alert("Pembayaran berhasil!");
       } catch (error) {
-        console.error("Error submitting payment:", error);
+        console.error("Error:", error);
         alert(`Pembayaran gagal: ${error.message}`);
-
-        console.log("Payment Data:", paymentData);
+      } finally {
+        isLoading.value = false; // Re-enable submit button
       }
     };
 

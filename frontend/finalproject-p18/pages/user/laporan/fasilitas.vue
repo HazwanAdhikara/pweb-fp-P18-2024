@@ -40,6 +40,7 @@
             id="username"
             v-model="username"
             class="mt-1 block w-full p-2 border border-gray-300 rounded"
+            placeholder="Masukkan nama Anda"
             required
           />
         </div>
@@ -53,6 +54,7 @@
             v-model="message"
             class="mt-1 block w-full p-2 border border-gray-300 rounded"
             rows="4"
+            placeholder="Tuliskan laporan Anda di sini..."
             required
           ></textarea>
         </div>
