@@ -1,25 +1,66 @@
 // controllers/invoiceController.ts
 import { Request, Response } from "express";
+import fs from "fs";
 import path from "path";
 
-export const downloadInvoice = (req: Request, res: Response) => {
-  const { paymentId } = req.params; // Ambil paymentId dari URL parameter
-  console.log("Received ID:", paymentId);
-  const filePath = path.resolve(
-    __dirname,
-    "../../invoices",
-    `invoice-${paymentId}.pdf`
-  );
-  console.log("Attempting to access:", filePath);
+export const downloadInvoice = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { paymentId } = req.params;
 
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", "attachment; filename=invoice.pdf");
+    // Clean up paymentId - remove any "invoice-" prefix and ".pdf" suffix
+    const cleanPaymentId = paymentId
+      .replace(/^invoice-/, "") // Remove "invoice-" prefix if present
+      .replace(/\.pdf$/, ""); // Remove ".pdf" suffix if present
 
-  // Kirimkan file PDF ke frontend
-  res.sendFile(filePath, (err) => {
-    if (err) {
-      console.error("Error sending file:", err);
-      return res.status(500).send("Gagal mengunduh file");
+    // Validate paymentId
+    if (!cleanPaymentId) {
+      res.status(400).json({ message: "Payment ID is required" });
+      return;
     }
-  });
+
+    // Tentukan path file with cleaned ID
+    const filePath = path.resolve(
+      __dirname,
+      `../../invoices/invoice-${cleanPaymentId}.pdf`
+    );
+
+    // Cek apakah file ada
+    if (!fs.existsSync(filePath)) {
+      res.status(404).json({
+        message: "Invoice not found",
+        error: `No invoice found for payment ID: ${cleanPaymentId}`,
+      });
+      return;
+    }
+
+    // Set response headers
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=invoice-${cleanPaymentId}.pdf`
+    );
+    res.setHeader("Cache-Control", "no-cache");
+
+    // Stream the file instead of loading it entirely into memory
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+
+    // Handle streaming errors
+    fileStream.on("error", (error) => {
+      console.error("Error streaming file:", error);
+      res.status(500).json({
+        message: "Error downloading invoice",
+        error: error.message,
+      });
+    });
+  } catch (error) {
+    console.error("Error in downloadInvoice:", error);
+    res.status(500).json({
+      message: "Internal server error",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
 };

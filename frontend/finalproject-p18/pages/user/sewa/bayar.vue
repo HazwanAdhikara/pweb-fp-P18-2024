@@ -96,7 +96,6 @@
           type="submit"
           class="bg-blue-600 text-white py-2 px-4 rounded"
           :disabled="!paymentMethod"
-          @click="submitPayment"
         >
           Submit Pembayaran
         </button>
@@ -116,12 +115,11 @@ export default {
     const router = useRouter();
     const paymentMethod = ref("");
     const bankName = ref("");
-    const paymentStatus = ref({
-      created_at: null,
-      status: "Belum Lunas",
-    });
+    const paymentStatus = ref(null);
     const invoiceUrl = ref(null);
-    const isLoading = ref(false);
+    const isLoading = ref(true);
+    const isDownloading = ref(false);
+    const downloadError = ref(null);
 
     // State untuk menyimpan detail sewa
     const rentalDetails = ref({
@@ -163,10 +161,16 @@ export default {
     onMounted(async () => {
       try {
         const queryParams = route.query;
+        console.log("Query params:", queryParams);
 
-        // Validasi query params
+        // Check if we have query params
         if (!queryParams.period || !queryParams.total) {
-          throw new Error("Data sewa tidak lengkap");
+          console.log("No query params, redirecting to rental page");
+          alert(
+            "Anda Belum Melakukan Sewa. Silakan Sewa Kamar Terlebih Dahulu."
+          );
+          router.push("/user/sewa");
+          return;
         }
 
         // Set rental details dari query params
@@ -175,11 +179,19 @@ export default {
           total: parseInt(queryParams.total) || 0,
         };
 
+        // Validate the values
+        if (rentalDetails.value.period <= 0 || rentalDetails.value.total <= 0) {
+          console.error("Invalid rental details:", rentalDetails.value);
+          throw new Error("Data sewa tidak valid");
+        }
+
+        console.log("Rental details:", rentalDetails.value);
+
         // Ambil status pembayaran terkini
         await fetchPaymentStatus();
       } catch (error) {
         console.error("Error initializing payment page:", error);
-        alert("Anda Belum Melakukan Sewa. Silakan Sewa Kamar Terlebih Dahulu.");
+        alert("Terjadi kesalahan saat memuat data. Silakan coba lagi.");
         router.push("/user/sewa");
       } finally {
         isLoading.value = false;
@@ -197,28 +209,51 @@ export default {
           },
         });
 
-        if (!response.ok) throw new Error("Gagal mengambil status");
+        if (!response.ok) throw new Error("Gagal mengambil status pembayaran");
+
+        const data = await response.json();
+        if (data && Object.keys(data).length > 0) {
+          paymentStatus.value = {
+            ...data,
+            status: data.bill ? "Lunas" : "Belum Lunas",
+          };
+        }
       } catch (error) {
-        console.error("Error:", error);
-        // Don't reset status on fetch error
+        console.error("Error fetching payment status:", error);
+        paymentStatus.value = {
+          status: "Belum Lunas",
+          bill: null,
+          created_at: null,
+        };
       }
     };
 
     const submitPayment = async () => {
-      if (isLoading.value) return; // Mencegah pengiriman ganda
+      if (isLoading.value) return; // Prevent double submission
       isLoading.value = true;
 
       try {
         const token = localStorage.getItem("token");
-        if (!token) throw new Error("Token tidak ditemukan");
+        if (!token) {
+          throw new Error("Token tidak ditemukan. Silakan login kembali.");
+        }
+
+        // Validate bank name for bank transfer
+        if (paymentMethod.value === "BANK_TRANSFER" && !bankName.value) {
+          throw new Error(
+            "Nama bank harus diisi untuk pembayaran transfer bank"
+          );
+        }
 
         const paymentData = {
           total_bill: rentalDetails.value.total,
           payment_method: paymentMethod.value,
           rent_periods: rentalDetails.value.period,
           bank_name:
-            paymentMethod.value === "BANK_TRANSFER" ? bankName.value : "",
+            paymentMethod.value === "BANK_TRANSFER" ? bankName.value : "null",
         };
+
+        console.log("Sending payment data:", paymentData);
 
         const response = await fetch("http://localhost:4000/user/sewa/bayar", {
           method: "POST",
@@ -235,34 +270,33 @@ export default {
           throw new Error(result.message || "Pembayaran gagal");
         }
 
-        // Update status immediately after successful payment
+        // Update payment status immediately after successful payment
         paymentStatus.value = {
-          ...paymentStatus.value,
           status: "Lunas",
-          created_at: new Date().toISOString(),
           bill: rentalDetails.value.total,
+          created_at: new Date().toISOString(),
         };
 
         if (result.invoice) {
           invoiceUrl.value = `http://localhost:4000/api/downloads/${result.invoice._id}`;
         }
         console.log("Invoice URL:", invoiceUrl.value);
-        console.log("Payment ID:", result.invoice._id);
-        // Refresh status from server
-        await fetchPaymentStatus();
 
-        // Alert message
         alert("Pembayaran berhasil!");
       } catch (error) {
-        console.error("Error:", error);
+        console.error("Error submitting payment:", error);
+
         alert(`Pembayaran gagal: ${error.message}`);
       } finally {
-        isLoading.value = false; // Re-enable submit button
+        isLoading.value = false;
       }
     };
 
-    async function downloadInvoice() {
-      if (!invoiceUrl.value) return;
+    const downloadInvoice = async () => {
+      if (!invoiceUrl.value || isDownloading.value) return;
+
+      isDownloading.value = true;
+      downloadError.value = null;
 
       try {
         const token = localStorage.getItem("token");
@@ -285,40 +319,34 @@ export default {
 
         const blob = await response.blob();
         if (blob.size === 0) {
-          const reader = new FileReader();
-          reader.readAsText(blob);
-          reader.onload = function (event) {
-            const text = event.target.result;
-            console.error("Empty PDF:", text);
-            throw new Error("File PDF kosong atau terdapat error pada server");
-          };
-          reader.onerror = function (error) {
-            console.error("Error reading blob:", error);
-            throw new Error("Gagal membaca file PDF");
-          };
-        } else {
-          // Create a temporary URL for the blob
-          const url = URL.createObjectURL(blob);
-
-          // Trigger the download using a hidden anchor element
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = `invoice-${new Date().toISOString()}.pdf`; // Generate a unique filename
-          link.style.display = "none";
-          document.body.appendChild(link);
-          link.click();
-
-          // Cleanup the temporary URL after a short delay
-          setTimeout(() => {
-            URL.revokeObjectURL(url);
-            document.body.removeChild(link);
-          }, 1000);
+          throw new Error("File PDF kosong atau terdapat error pada server");
         }
+
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `invoice-${new Date().toISOString()}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+
+        // Cleanup
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(link);
+        }, 1000);
       } catch (error) {
-        console.error("Error downloading invoice:", error);
+        console.error("Download error:", error);
+        downloadError.value = error.message;
         alert(`Gagal mengunduh invoice: ${error.message}`);
+      } finally {
+        isDownloading.value = false;
       }
-    }
+    };
+
+    const isValidAccess = computed(() => {
+      return rentalDetails.value.period > 0 && rentalDetails.value.total > 0;
+    });
 
     return {
       paymentMethod,
@@ -332,6 +360,9 @@ export default {
       downloadInvoice,
       formatCurrency,
       bankName,
+      isDownloading,
+      downloadError,
+      isValidAccess,
     };
   },
 };

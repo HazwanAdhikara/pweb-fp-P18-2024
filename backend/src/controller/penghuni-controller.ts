@@ -11,7 +11,10 @@ import { generateInvoicePDF } from "../utils/pdfUtils";
 import path from "path";
 
 // Controller untuk menampilkan history tagihan
-export const getInvoiceHistory = async (req: Request & { user?: any }, res: Response) => {
+export const getInvoiceHistory = async (
+  req: Request & { user?: any },
+  res: Response
+) => {
   try {
     const userId = req.user._id;
     const invoiceHistory = await InvoiceHistory.find({ user: userId });
@@ -22,14 +25,20 @@ export const getInvoiceHistory = async (req: Request & { user?: any }, res: Resp
 };
 
 // Controller untuk membuat pembayaran
-export const createPayment = async (req: Request & { user?: any }, res: Response): Promise<void> => {
-  const { total_bill, payment_method, rent_periods } = req.body;
+export const createPayment = async (
+  req: Request & { user?: any },
+  res: Response
+): Promise<void> => {
+  const { total_bill, payment_method, rent_periods, bank_name } = req.body;
 
   try {
     const userId = req.user._id;
-    let invoice = await InvoiceHistory.findOne({user: userId, status: "Belum Lunas"});
+    let invoice = await InvoiceHistory.findOne({
+      user: userId,
+      status: "Belum Lunas",
+    });
     if (!invoice) {
-       invoice = new InvoiceHistory({
+      invoice = new InvoiceHistory({
         bill: total_bill,
         rent_periods,
         status: "Belum Lunas",
@@ -38,11 +47,20 @@ export const createPayment = async (req: Request & { user?: any }, res: Response
       });
       await invoice.save();
     }
+
+    // Validate bank_name for BANK_TRANSFER
+    if (payment_method === "BANK_TRANSFER" && !bank_name) {
+      res.status(400).json({
+        message: "Bank name is required for bank transfer payments",
+      });
+    }
+
     const newPayment = new Payment({
       total_bill,
       payment_method,
       rent_periods,
       user: userId,
+      bank_name: payment_method === "BANK_TRANSFER" ? bank_name : undefined,
     });
     await newPayment.save();
 
@@ -53,7 +71,8 @@ export const createPayment = async (req: Request & { user?: any }, res: Response
 
     res.status(201).json({
       message: "Payment created successfully",
-      payment: newPayment, invoice,
+      payment: newPayment,
+      invoice,
       invoicePDF: path.basename(pdfPath),
     });
   } catch (error) {

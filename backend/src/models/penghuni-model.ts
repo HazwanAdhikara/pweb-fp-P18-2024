@@ -48,6 +48,10 @@ const PaymentSchema = new mongoose.Schema(
       enum: [3, 6],
       required: true,
     },
+    bank_name: {
+      type: String,
+      required: false,
+    },
     user: {
       type: mongoose.Schema.Types.ObjectId, // Referensi ke pengguna
       ref: "Users",
@@ -116,7 +120,6 @@ const UserDetailSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-
 const RoomSchema = new mongoose.Schema({
   room_number: {
     type: Number,
@@ -143,4 +146,12 @@ const UserDetail = mongoose.model("UserDetail", UserDetailSchema);
 const Room = mongoose.model("Room", RoomSchema);
 
 // Ekspor model agar bisa digunakan di controller atau file lain
-export { InvoiceHistory, Payment, DamageReporting, UserReport, RoomOccupancy, UserDetail, Room };
+export {
+  InvoiceHistory,
+  Payment,
+  DamageReporting,
+  UserReport,
+  RoomOccupancy,
+  UserDetail,
+  Room,
+};
