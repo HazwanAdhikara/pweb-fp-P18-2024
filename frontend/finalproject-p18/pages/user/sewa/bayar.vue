@@ -45,17 +45,7 @@
       </p>
       <p v-if="error" class="text-red-500">{{ error }}</p>
 
-      <!-- Tombol Download Invoice -->
-      <button
-        v-if="paymentStatus?.status === 'Lunas' && invoiceUrl"
-        @click="downloadInvoice"
-        class="mt-4 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition"
-      >
-        Download Invoice PDF
-      </button>
-
       <div v-if="invoiceUrl" class="mt-4">
-        <!-- Link untuk membuka invoice di tab baru dengan tampilan tombol hijau -->
         <a
           :href="invoiceUrl"
           target="_blank"
@@ -227,7 +217,7 @@ export default {
           payment_method: paymentMethod.value,
           rent_periods: rentalDetails.value.period,
           bank_name:
-            paymentMethod.value === "BANK_TRANSFER" ? bankName.value : null,
+            paymentMethod.value === "BANK_TRANSFER" ? bankName.value : "",
         };
 
         const response = await fetch("http://localhost:4000/user/sewa/bayar", {
@@ -254,9 +244,10 @@ export default {
         };
 
         if (result.invoice) {
-          invoiceUrl.value = `http://localhost:4000/api/downloads/${result.invoice}`;
+          invoiceUrl.value = `http://localhost:4000/api/downloads/${result.invoice._id}`;
         }
-
+        console.log("Invoice URL:", invoiceUrl.value);
+        console.log("Payment ID:", result.invoice._id);
         // Refresh status from server
         await fetchPaymentStatus();
 

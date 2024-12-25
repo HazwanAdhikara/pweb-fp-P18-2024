@@ -30,7 +30,7 @@ export const generateInvoicePDF = (payment: any) => {
     if (payment.payment_method === "QRIS") {
       doc.text(`Metode Pembayaran: QRIS`);
     } else if (payment.payment_method === "BANK_TRANSFER") {
-      doc.text(`Metode Pembayaran: ${payment.bankName}`);
+      doc.text(`Metode Pembayaran: ${payment.payment_method}`);
     }
 
     doc.text(`Jumlah Tagihan: Rp ${payment.total_bill}`);

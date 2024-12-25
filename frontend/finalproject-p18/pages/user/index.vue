@@ -2,27 +2,8 @@
   <div class="p-6 bg-gray-100 min-h-screen">
     <h1 class="text-3xl font-bold mb-6 text-blue-600">Dashboard Penghuni</h1>
 
-    <!-- History Tagihan -->
-    <div class="bg-white rounded-lg shadow p-4 mb-6">
-      <h2 class="text-xl font-semibold mb-4 text-blue-600">History Tagihan</h2>
-      <ul>
-        <li
-          v-for="(bill, index) in billingHistory"
-          :key="index"
-          class="mb-4 border-b pb-4"
-        >
-          <p><strong>Tanggal Pembayaran:</strong> {{ bill.date }}</p>
-          <p><strong>Total:</strong> Rp {{ bill.total }}</p>
-          <p><strong>Status:</strong> {{ bill.status }}</p>
-        </li>
-      </ul>
-      <p v-if="billingHistory.length === 0" class="text-gray-500">
-        Belum ada history tagihan.
-      </p>
-    </div>
-
     <!-- Navigasi ke Halaman Lain -->
-    <div class="bg-white rounded-lg shadow p-4">
+    <div class="bg-white rounded-lg shadow p-4 mb-6">
       <h2 class="text-xl font-semibold mb-4 text-blue-600">Layanan</h2>
       <ul class="flex flex-wrap gap-4">
         <li>
@@ -46,6 +27,25 @@
           </router-link>
         </li>
       </ul>
+    </div>
+
+    <!-- History Tagihan -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <h2 class="text-xl font-semibold mb-4 text-blue-600">History Tagihan</h2>
+      <ul>
+        <li
+          v-for="(bill, index) in billingHistory"
+          :key="index"
+          class="mb-4 border-b pb-4"
+        >
+          <p><strong>Tanggal Pembayaran:</strong> {{ bill.date }}</p>
+          <p><strong>Total:</strong> Rp {{ bill.total }}</p>
+          <p><strong>Status:</strong> {{ bill.status }}</p>
+        </li>
+      </ul>
+      <p v-if="billingHistory.length === 0" class="text-gray-500">
+        Belum ada history tagihan.
+      </p>
     </div>
   </div>
 </template>
