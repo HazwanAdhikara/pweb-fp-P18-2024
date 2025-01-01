@@ -9,11 +9,12 @@ export const downloadInvoice = async (
 ): Promise<void> => {
   try {
     const { paymentId } = req.params;
+    console.log("Requested Download ID:", paymentId);
 
-    // Clean up paymentId - remove any "invoice-" prefix and ".pdf" suffix
+    // clean up the invoice name for endpoint
     const cleanPaymentId = paymentId
-      .replace(/^invoice-/, "") // Remove "invoice-" prefix if present
-      .replace(/\.pdf$/, ""); // Remove ".pdf" suffix if present
+      .replace(/^invoice-/, "")
+      .replace(/\.pdf$/, "");
 
     // Validate paymentId
     if (!cleanPaymentId) {

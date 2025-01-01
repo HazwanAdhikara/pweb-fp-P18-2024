@@ -1,105 +1,176 @@
 <template>
-  <div class="p-6 bg-gray-100 min-h-screen">
-    <RouterLink
-      to="/user"
-      class="inline-flex items-center mb-6 text-blue-600 hover:text-blue-800 transition-colors"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-5 w-5 mr-2"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+    <div class="max-w-4xl mx-auto">
+      <!-- Back Button -->
+      <RouterLink
+        to="/user"
+        class="inline-flex items-center mb-6 text-blue-600 hover:text-blue-800 transition-all transform hover:translate-x-[-4px]"
       >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M10 19l-7-7m0 0l7-7m-7 7h18"
-        />
-      </svg>
-      Back to Dashboard
-    </RouterLink>
-    <h1 class="text-3xl font-bold mb-6 text-blue-600">Pembayaran</h1>
-
-    <!-- Detail Pembayaran -->
-    <div class="bg-white rounded-lg shadow p-4 mb-6">
-      <h2 class="text-xl font-semibold mb-4 text-blue-600">
-        Detail Perhitungan
-      </h2>
-      <p><strong>Periode Sewa:</strong> {{ rentalDetails.period }} bulan</p>
-      <p>
-        <strong>Total Biaya Seluruhnya:</strong> Rp
-        {{ formatCurrency(rentalDetails.total) }}
-      </p>
-    </div>
-
-    <!-- Status Pembayaran -->
-    <div v-if="showPaymentStatus" class="bg-white rounded-lg shadow p-4 mb-6">
-      <h2 class="text-xl font-semibold mb-4 text-blue-600">
-        Status Pembayaran
-      </h2>
-      <p><strong>Tanggal Pembayaran:</strong> {{ formattedPaymentDate }}</p>
-      <p>
-        <strong>Status:</strong> {{ paymentStatus?.status || "Belum Lunas" }}
-      </p>
-      <p v-if="error" class="text-red-500">{{ error }}</p>
-
-      <div v-if="invoiceUrl" class="mt-4">
-        <a
-          :href="invoiceUrl"
-          target="_blank"
-          class="text-white bg-green-500 hover:bg-green-700 py-2 px-4 rounded-md mb-4"
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5 mr-2"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
         >
-          Klik di sini untuk melihat invoice
-        </a>
-      </div>
-    </div>
-
-    <!-- Form Pembayaran -->
-    <div
-      v-if="!paymentStatus || paymentStatus.status === 'Belum Lunas'"
-      class="bg-white rounded-lg shadow p-4"
-    >
-      <h2 class="text-xl font-semibold mb-4 text-blue-600">Form Pembayaran</h2>
-      <form @submit.prevent="submitPayment">
-        <!-- Pilihan Metode Pembayaran -->
-        <div class="mb-4">
-          <label class="block text-gray-700 font-medium mb-2"
-            >Metode Pembayaran</label
-          >
-          <select
-            v-model="paymentMethod"
-            class="w-full border rounded-lg p-2"
-            required
-          >
-            <option value="" disabled>Pilih Metode Pembayaran</option>
-            <option value="QRIS">QRIS</option>
-            <option value="BANK_TRANSFER">Transfer Bank</option>
-          </select>
-        </div>
-
-        <!-- Input Nama Bank -->
-        <div v-if="paymentMethod === 'BANK_TRANSFER'" class="mb-4">
-          <label class="block text-gray-700 font-medium mb-2">Nama Bank</label>
-          <input
-            type="text"
-            v-model="bankName"
-            class="w-full border rounded-lg p-2"
-            placeholder="Masukkan nama bank"
-            required
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M10 19l-7-7m0 0l7-7m-7 7h18"
           />
+        </svg>
+        Back to Dashboard
+      </RouterLink>
+
+      <!-- Header -->
+      <h1
+        class="text-4xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600"
+      >
+        Pembayaran
+      </h1>
+
+      <!-- Payment Details Card -->
+      <div
+        class="bg-white rounded-2xl shadow-lg p-6 mb-6 transform transition hover:shadow-xl"
+      >
+        <h2 class="text-2xl font-semibold mb-6 flex items-center text-gray-800">
+          <span class="text-2xl mr-2">📋</span> Detail Perhitungan
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-blue-50 rounded-xl p-4">
+            <p class="text-sm text-gray-600 mb-1">Periode Sewa</p>
+            <p class="text-xl font-semibold text-blue-600">
+              {{ rentalDetails.period }} bulan
+            </p>
+          </div>
+          <div class="bg-blue-50 rounded-xl p-4">
+            <p class="text-sm text-gray-600 mb-1">Total Biaya</p>
+            <p class="text-xl font-semibold text-blue-600">
+              Rp {{ formatCurrency(rentalDetails.total) }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Status Card -->
+      <div
+        v-if="showPaymentStatus"
+        class="bg-white rounded-2xl shadow-lg p-6 mb-6 transform transition hover:shadow-xl"
+      >
+        <h2 class="text-2xl font-semibold mb-6 flex items-center text-gray-800">
+          <span class="text-2xl mr-2">📊</span> Status Pembayaran
+        </h2>
+        <div class="space-y-4">
+          <div class="flex justify-between items-center py-2 border-b">
+            <span class="text-gray-600">Tanggal Pembayaran</span>
+            <span class="font-semibold">{{ formattedPaymentDate }}</span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b">
+            <span class="text-gray-600">Status</span>
+            <span :class="getStatusClass">
+              {{ paymentStatus?.status || "Belum Lunas" }}
+            </span>
+          </div>
         </div>
 
-        <!-- Tombol Submit -->
-        <button
-          type="submit"
-          class="bg-blue-600 text-white py-2 px-4 rounded"
-          :disabled="!paymentMethod"
-        >
-          Submit Pembayaran
-        </button>
-      </form>
+        <!-- Invoice Download Button -->
+        <div v-if="invoiceUrl" class="mt-6">
+          <a
+            :href="invoiceUrl"
+            target="_blank"
+            class="inline-flex items-center justify-center w-full py-3 px-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold hover:shadow-lg transform hover:translate-y-[-2px] transition-all"
+          >
+            <span class="mr-2">📄</span>
+            Lihat Invoice
+          </a>
+        </div>
+      </div>
+
+      <!-- Payment Form -->
+      <div
+        v-if="!paymentStatus || paymentStatus.status === 'Belum Lunas'"
+        class="bg-white rounded-2xl shadow-lg p-6 transform transition hover:shadow-xl"
+      >
+        <h2 class="text-2xl font-semibold mb-6 flex items-center text-gray-800">
+          <span class="text-2xl mr-2">💳</span> Form Pembayaran
+        </h2>
+        <form @submit.prevent="submitPayment" class="space-y-6">
+          <!-- Payment Method Selection -->
+          <div class="space-y-2">
+            <label class="block text-gray-700 font-medium"
+              >Metode Pembayaran</label
+            >
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <label
+                class="payment-method-card"
+                :class="{ selected: paymentMethod === 'QRIS' }"
+              >
+                <input
+                  type="radio"
+                  v-model="paymentMethod"
+                  value="QRIS"
+                  class="hidden"
+                />
+                <div
+                  class="p-4 border-2 rounded-xl cursor-pointer transition-all"
+                >
+                  <div class="flex items-center">
+                    <span class="text-2xl mr-3">📱</span>
+                    <span class="font-medium">QRIS</span>
+                  </div>
+                </div>
+              </label>
+
+              <label
+                class="payment-method-card"
+                :class="{ selected: paymentMethod === 'BANK_TRANSFER' }"
+              >
+                <input
+                  type="radio"
+                  v-model="paymentMethod"
+                  value="BANK_TRANSFER"
+                  class="hidden"
+                />
+                <div
+                  class="p-4 border-2 rounded-xl cursor-pointer transition-all"
+                >
+                  <div class="flex items-center">
+                    <span class="text-2xl mr-3">🏦</span>
+                    <span class="font-medium">Transfer Bank</span>
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Bank Name Input -->
+          <div
+            v-if="paymentMethod === 'BANK_TRANSFER'"
+            class="transition-all duration-300 ease-in-out"
+          >
+            <label class="block text-gray-700 font-medium mb-2"
+              >Nama Bank</label
+            >
+            <input
+              type="text"
+              v-model="bankName"
+              class="w-full border-2 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Masukkan nama bank"
+              required
+            />
+          </div>
+
+          <!-- Submit Button -->
+          <button
+            type="submit"
+            class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-8 rounded-xl font-semibold hover:shadow-lg transform hover:translate-y-[-2px] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="!paymentMethod"
+          >
+            Submit Pembayaran
+          </button>
+        </form>
+      </div>
     </div>
   </div>
 </template>
@@ -277,10 +348,12 @@ export default {
           created_at: new Date().toISOString(),
         };
 
-        if (result.invoice) {
-          invoiceUrl.value = `http://localhost:4000/api/downloads/${result.invoice._id}`;
+        if (result.invoice && result.invoice._id) {
+          // Simpan ID dalam state
+          const invoiceId = result.invoice._id.toString();
+          invoiceUrl.value = `http://localhost:4000/api/downloads/${invoiceId}`;
+          console.log("Invoice URL:", invoiceUrl.value);
         }
-        console.log("Invoice URL:", invoiceUrl.value);
 
         alert("Pembayaran berhasil!");
       } catch (error) {
@@ -295,6 +368,11 @@ export default {
     const downloadInvoice = async () => {
       if (!invoiceUrl.value || isDownloading.value) return;
 
+      const invoiceId = invoiceUrl.value.split("/").pop();
+      if (!validatePaymentId(invoiceId)) {
+        alert("Invalid invoice ID format");
+        return;
+      }
       isDownloading.value = true;
       downloadError.value = null;
 

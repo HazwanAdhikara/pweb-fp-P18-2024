@@ -13,6 +13,7 @@ export const generateInvoicePDF = (payment: any) => {
   // Pastikan folder 'invoices' ada
   ensureInvoicesFolderExists();
 
+  const paymentId = payment._id.toString();
   const doc = new PDFDocument();
   const filePath = `./invoices/invoice-${payment._id}.pdf`;
 
@@ -22,7 +23,7 @@ export const generateInvoicePDF = (payment: any) => {
   // Isi dokumen PDF
   doc.fontSize(20).text("Invoice Pembayaran", { align: "center" });
   doc.moveDown();
-  doc.fontSize(12).text(`Invoice ID: ${payment._id}`);
+  doc.fontSize(12).text(`Invoice ID: ${paymentId}`);
   doc.text(`Tanggal: ${new Date().toLocaleDateString()}`);
 
   doc.moveDown();
@@ -44,7 +45,7 @@ export const generateInvoicePDF = (payment: any) => {
   doc.end();
 
   return new Promise<string>((resolve, reject) => {
-    stream.on("finish", () => resolve(filePath));
+    stream.on("finish", () => resolve(paymentId));
     stream.on("error", (err) => reject(err));
   });
 };
